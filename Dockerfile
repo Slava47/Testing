@@ -17,4 +17,4 @@ RUN pip install --no-cache-dir \
 EXPOSE 5000
 
 # Запускаем бота
-CMD ["python", "your_bot_script.py"]
+CMD ["python", "pipi30.py"]
