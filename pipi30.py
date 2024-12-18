@@ -342,7 +342,6 @@ def handle_event_selection(call):
    else:
        bot.send_message(call.message.chat.id, "Выбранное мероприятие не найдено.")
 
-# Обработка команды "Записаться на мероприятие"
 @bot.message_handler(func=lambda message: message.text == "🟢 Записаться на мероприятие")
 def get_event_for_application(message):
     cursor.execute('SELECT name FROM events')
@@ -381,6 +380,16 @@ def handle_event_selection(message):
     else:
         bot.send_message(message.chat.id, "Выбранное мероприятие не найдено.")
 
+def ask_for_group(message, event_id):
+    full_name = message.text.strip()
+    bot.send_message(message.chat.id, "Введите вашу группу:")
+    bot.register_next_step_handler(message, lambda msg: ask_for_faculty(msg, full_name, event_id))
+
+def ask_for_faculty(message, full_name, event_id):
+    group_name = message.text.strip()
+    bot.send_message(message.chat.id, "Введите ваш факультет:")
+    bot.register_next_step_handler(message, lambda msg: submit_application(msg, full_name, group_name, msg.text.strip(), event_id))
+
 def submit_application(message, full_name, group_name, faculty, event_id):
     user_id = message.from_user.id
 
@@ -416,6 +425,7 @@ def submit_application(message, full_name, group_name, faculty, event_id):
         )
     
     bot.send_message(message.chat.id,"Ваша заявка отправлена!")
+
 
 
 # Обработка команды "Запросить ссылку на мероприятие"
