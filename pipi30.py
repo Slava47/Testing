@@ -9,7 +9,7 @@ import random
 import string
 import sys
 
-TOKEN = '7277176904:AAHHm2P0vDtgtB9EZn7kmgvFH5rjJchjITU'  # Замените на ваш токен
+TOKEN = 'TOKEN'  # Замените на ваш токен
 bot = telebot.TeleBot(TOKEN)
 
 # Подключение к базе данных
