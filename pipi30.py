@@ -9,7 +9,7 @@ import random
 import string
 import sys
 
-TOKEN = 'TOKEN'  # Замените на ваш токен
+TOKEN = os.getenv('TOKEN')  # Используйте имя переменной без префикса '$'
 bot = telebot.TeleBot(TOKEN)
 
 # Подключение к базе данных
