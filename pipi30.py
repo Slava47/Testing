@@ -673,95 +673,109 @@ def confirm_delete_event(message):
 	    message.chat.id, f"Мероприятие '{selected_event}' успешно удалено."
 	)
 
-# Обработка команды "Отправить баллы"
 @bot.message_handler(func=lambda message: message.text == "🟢 Отправить баллы")
 def send_points_menu(message):
-	if message.from_user.id in ADMIN_IDS:
-		cursor.execute('SELECT name FROM events')
-		events = cursor.fetchall()
+    if message.from_user.id in ADMIN_IDS:
+        cursor.execute('SELECT name FROM events')
+        events = cursor.fetchall()
 
-		if events:
-			markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-			for event in events:
-				markup.add(event[0])
-			markup.add(types.KeyboardButton("❌ Отменить"))  # Добавляем кнопку отмены здесь 
-			bot.send_message(
-				message.chat.id, "Выберите мероприятие для отправки баллов:", reply_markup=markup)
-			bot.register_next_step_handler(message, select_user_for_points)
-		else:
-			bot.send_message(message.chat.id, "Нет мероприятий для отправки баллов.")
+        if events:
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            for event in events:
+                markup.add(event[0])
+            markup.add(types.KeyboardButton("❌ Отменить"))  # Добавляем кнопку отмены здесь 
+            bot.send_message(message.chat.id, "Выберите мероприятие для отправки баллов:", reply_markup=markup)
+            bot.register_next_step_handler(message, select_user_for_points)
+        else:
+            bot.send_message(message.chat.id, "Нет мероприятий для отправки баллов.")
 
 def select_user_for_points(message):
-	selected_event = message.text.strip()
-	
-	if selected_event == "❌ Отменить":
-	    cancel_action(message)
-	    return
-	
-	cursor.execute('SELECT id FROM events WHERE name=?', (selected_event,))
-	event_id_result = cursor.fetchone()
+    selected_event = message.text.strip()
+    
+    if selected_event == "❌ Отменить":
+        cancel_action(message)  # Обработка отмены
+        return
+    
+    cursor.execute('SELECT id FROM events WHERE name=?', (selected_event,))
+    event_id_result = cursor.fetchone()
 
-	if not event_id_result:
-		bot.send_message(message.chat.id, "Мероприятие не найдено.")
-		return
+    if not event_id_result:
+        bot.send_message(message.chat.id, "Мероприятие не найдено.")
+        return
 
-	event_id = event_id_result[0]
-	
-	cursor.execute('SELECT full_name FROM applications WHERE event_id=?', (event_id,))
-	applicants = cursor.fetchall()
+    event_id = event_id_result[0]
+    
+    cursor.execute('SELECT full_name FROM applications WHERE event_id=?', (event_id,))
+    applicants = cursor.fetchall()
 
-	if applicants:
-		markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-		for app in applicants:
-			markup.add(app[0])
-		bot.send_message(
-			message.chat.id, "Выберите пользователя для начисления баллов:", reply_markup=markup)
-		bot.register_next_step_handler(message, lambda msg: set_points(msg, event_id))
-	else:
-		bot.send_message(message.chat.id, "Нет заявок на это мероприятие.")
+    if applicants:
+        markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+        for app in applicants:
+            markup.add(app[0])
+        markup.add(types.KeyboardButton("❌ Отменить"))  # Добавляем кнопку отмены здесь 
+        bot.send_message(message.chat.id, "Выберите пользователя для начисления баллов:", reply_markup=markup)
+        bot.register_next_step_handler(message, lambda msg: set_points(msg, event_id))
+    else:
+        bot.send_message(message.chat.id, "Нет заявок на это мероприятие.")
 
 def set_points(message, selected_event_id):
-	selected_user_full_name = message.text.strip()
-	
-	cursor.execute('SELECT user_id FROM applications WHERE full_name=? AND event_id=?',
-				   (selected_user_full_name.strip(), selected_event_id))
-	
-	user_data = cursor.fetchone()
-	
-	if user_data:
-		user_id = user_data[0]
-		
-		bot.send_message(
-			message.chat.id, "Введите количество баллов:")
-		bot.register_next_step_handler(
-			message, lambda msg: update_points(msg, selected_event_id, user_id))
+    if message.text.strip() == "❌ Отменить":
+        cancel_action(message)  # Обработка отмены
+        return
+    
+    selected_user_full_name = message.text.strip()
+    
+    cursor.execute('SELECT user_id FROM applications WHERE full_name=? AND event_id=?',
+                   (selected_user_full_name.strip(), selected_event_id))
+    
+    user_data = cursor.fetchone()
+    
+    if user_data:
+        user_id = user_data[0]
+        
+        bot.send_message(
+            message.chat.id, "Введите количество баллов:")
+        bot.register_next_step_handler(
+            message, lambda msg: update_points(msg, selected_event_id, user_id))
+    else:
+        bot.send_message(message.chat.id, "Пользователь не найден.")
 
 def update_points(message, event_id, user_id):
-	try:
-		points = int(message.text)
+    if message.text.strip() == "❌ Отменить":
+        cancel_action(message)  # Обработка отмены
+        return
 
-		cursor.execute('SELECT points FROM user_points WHERE user_id=?', (user_id,))
-		result = cursor.fetchone()
+    try:
+        points = int(message.text)  # Получаем количество баллов от пользователя
 
-		if result:
-			cursor.execute('UPDATE user_points SET points=points+? WHERE user_id=?', (points, user_id))
-		else:
-			cursor.execute('INSERT INTO user_points (user_id, points) VALUES (?, ?)', (user_id, points))
+        cursor.execute('SELECT points FROM user_points WHERE user_id=?', (user_id,))
+        result = cursor.fetchone()
 
-		conn.commit()
+        if result:
+            cursor.execute('UPDATE user_points SET points=points+? WHERE user_id=?', (points, user_id))
+        else:
+            cursor.execute('INSERT INTO user_points (user_id, points) VALUES (?, ?)', (user_id, points))
 
-		cursor.execute('SELECT name FROM events WHERE id=?', (event_id,))
-		event_name = cursor.fetchone()[0]
+        conn.commit()
 
-		bot.send_message(user_id,
+        cursor.execute('SELECT name FROM events WHERE id=?', (event_id,))
+        event_name = cursor.fetchone()[0]
+
+        bot.send_message(user_id,
                          f"Вам начислено {points} баллов за участие в мероприятии '{event_name}'.")
 
-		for admin in ADMIN_IDS:
-			bot.send_message(admin,
+        for admin in ADMIN_IDS:
+            bot.send_message(admin,
                              f"Баллы за мероприятие '{event_name}' обновлены.")
-		
-	except ValueError:
-		bot.send_message(ADMIN_IDS[0], "Пожалуйста введите корректное число.")
+        
+    except ValueError:
+        bot.send_message(message.chat.id, "Пожалуйста, введите корректное число. Попробуйте еще раз:")
+        bot.register_next_step_handler(message, lambda msg: update_points(msg, event_id, user_id))  # Повторный ввод
+
+def cancel_action(message):
+    bot.send_message(message.chat.id, "Вы вернулись в главное меню.")
+    show_main_menu(message)  # Возвращаем в главное меню
+
 
 # Обработка команды "Отправить отчет"
 @bot.message_handler(func=lambda message: message.text == "📝 Отправить отчет")
