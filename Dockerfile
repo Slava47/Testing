@@ -16,5 +16,7 @@ RUN pip install --no-cache-dir \
 # Открываем порт, если необходимо (например, для веб-сервиса)
 EXPOSE 5000
 
+VOLUME /app/data
+
 # Запускаем бота
 CMD ["python", "pipi30.py"]
