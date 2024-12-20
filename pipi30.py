@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS saved_applications (
 conn.commit()
 
 # ID администраторов
-ADMIN_IDS = [5656088749]  # Замените на ID ваших администраторов
+ADMIN_IDS = [5656088749,893172924]  # Замените на ID ваших администраторов
 
 # Глобальные переменные и списки
 user_ids = []
