@@ -11,7 +11,6 @@ import sys
 
 TOKEN = os.getenv('TOKEN')  # Используйте имя переменной без префикса '$'
 bot = telebot.TeleBot(TOKEN)
-
 # Подключение к базе данных
 conn = sqlite3.connect('volunteer_bot.db', check_same_thread=False)
 cursor = conn.cursor()
@@ -141,7 +140,7 @@ def show_main_menu(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
     # Добавляем каждую кнопку на отдельной строке
-    btn_show_events = types.KeyboardButton("🟢 Показать мероприятия")
+    btn_show_events = types.KeyboardButton("🟢 Список мероприятий")
     markup.add(btn_show_events)
 
     btn_apply_event = types.KeyboardButton("🟢 Записаться на мероприятие")
@@ -286,7 +285,7 @@ def update_faculty_name(message, old_faculty):
 
 # Обработка команды "Показать мероприятия"
 # Обработка команды "Показать мероприятия"
-@bot.message_handler(func=lambda message: message.text == "🟢 Показать мероприятия")
+@bot.message_handler(func=lambda message: message.text == "🟢 Список мероприятий")
 def show_events(message):
     cursor.execute('SELECT name FROM events')
     events = cursor.fetchall()
@@ -911,3 +910,6 @@ if __name__ == "__main__":
             print(f"Произошла ошибка: {e}")
             print("Перезапуск бота...")
             os.execv(sys.executable, ['python'] + sys.argv)  # Перезапускаем текущий скрипт
+
+
+        
